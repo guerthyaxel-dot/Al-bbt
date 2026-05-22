@@ -1,73 +1,138 @@
-import fetch from 'node-fetch'
+import { execSync } from 'child_process'
+import fs from 'fs'
 
 export default {
-  command: ['sp', 'spotify'],
+
+  command: [
+    'spotify',
+    'sp',
+    'spot',
+    'music'
+  ],
+
   category: 'downloader',
-  run: async (sock, m, args) => {
+
+  run: async (
+    sock,
+    m,
+    args
+  ) => {
+
+    if (!args.length) {
+
+      return m.reply(
+
+`✿ Ingresa una canción
+
+Ejemplos:
+.sp doma
+.sp bad bunny
+.sp after dark`
+      )
+    }
+
+    const query =
+      args.join(' ')
+
     try {
-      if (!args[0]) {
-        return m.reply('✎ Por favor, menciona el nombre o URL de la canción que deseas descargar de Spotify')
-      }
 
-      const query = args.join(' ')
-      let url, songInfo
+      // =========================
+      // REACT
+      // =========================
 
-      if (/open\.spotify\.com\/track\//i.test(query)) {
-        url = query
-        const resInfo = await fetch(`${api.url}/dl/spotify?url=${encodeURIComponent(url)}&key=${api.key}`)
-        const resultInfo = await resInfo.json()
-        if (!resultInfo.status) return m.reply('❖ No se pudo procesar el enlace de Spotify.')
-        songInfo = resultInfo.data
-      } else {
-        const search = await fetch(`${api.url}/search/spotify?query=${encodeURIComponent(query)}&key=${api.key}`)
-        const data = await search.json()
-        if (!data.status || !data.data.length) {
-          return m.reply('❖ No se encontraron resultados en Spotify')
+      await sock.sendMessage(
+        m.chat,
+        {
+          react: {
+            text: '🎵',
+            key: m.key
+          }
         }
-        songInfo = data.data[0]
-        url = songInfo.url
+      )
+
+      // =========================
+      // WAIT
+      // =========================
+
+      await m.reply(
+        '✿ Buscando canción...'
+      )
+
+      // =========================
+      // CREAR TMP
+      // =========================
+
+      if (!fs.existsSync('./tmp')) {
+
+        fs.mkdirSync('./tmp')
       }
 
-      const duracion = (!songInfo.duration || songInfo.duration.includes('NaN'))
-        ? 'Desconocida'
-        : songInfo.duration || ""
+      const file =
+`./tmp/${Date.now()}.mp3`
 
-      const caption = `➪ Descargando › ${songInfo.title || songInfo.name}
+      // =========================
+      // DESCARGAR
+      // =========================
 
-> ✿⃘࣪◌ ֪ Artista › ${songInfo.artist || ""}
-> ✿⃘࣪◌ ֪ Álbum › ${songInfo.album || ""}
-> ✿⃘࣪◌ ֪ Fecha › ${songInfo.publish || songInfo.year}
-> ✿⃘࣪◌ ֪ Duración › ${duracion || ""}
-> ✿⃘࣪◌ ֪ Enlace › ${url || ""}
+      execSync(
 
-𐙚 ❀ ｡ ↻ El archivo se está enviando, espera un momento... ˙𐙚`
+`yt-dlp "ytsearch1:${query}" -x --audio-format mp3 -o "${file}"`,
+        {
+          stdio: 'ignore'
+        }
+      )
 
-      let yi = songInfo.image || songInfo.cover
+      // =========================
+      // VALIDAR
+      // =========================
 
-      await sock.sendMessage(m.chat, { image: { url: yi }, caption }, { quoted: m })
+      if (!fs.existsSync(file)) {
 
-      const resAudio = await fetch(`${api.url}/dl/spotify?url=${encodeURIComponent(url)}&key=${api.key}`)
-      const resultAudio = await resAudio.json()
-      if (!resultAudio.status || !resultAudio.data?.mp3) {
-        return m.reply('❖ No se pudo descargar el audio de Spotify.')
+        throw new Error(
+          'No se descargó el audio'
+        )
       }
 
-      const audioRes = await fetch(resultAudio.data.mp3)
-      if (!audioRes.ok) {
-        return m.reply('❖ Error al obtener el archivo de audio.')
-      }
-      const audioBuffer = Buffer.from(await audioRes.arrayBuffer())
+      // =========================
+      // ENVIAR
+      // =========================
 
-      const mensaje = {
-        audio: audioBuffer,
-        mimetype: 'audio/mpeg',
-        fileName: `${songInfo.name}.mp3`
-      }
+      await sock.sendMessage(
+        m.chat,
+        {
 
-      await sock.sendMessage(m.chat, mensaje, { quoted: m })
+          audio:
+            fs.readFileSync(file),
+
+          mimetype:
+            'audio/mpeg',
+
+          fileName:
+            `${query}.mp3`,
+
+          ptt: false
+        },
+        {
+          quoted: m
+        }
+      )
+
+      // =========================
+      // BORRAR
+      // =========================
+
+      fs.unlinkSync(file)
 
     } catch (e) {
-      await m.reply(msgglobal)
+
+      console.log(e)
+
+      await m.reply(
+
+`❌ Error Spotify
+
+${e.message}`
+      )
     }
-  }
+  },
 }

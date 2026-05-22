@@ -1,57 +1,163 @@
-import fetch from 'node-fetch';
-import FormData from 'form-data';
+// © Ado | 2026
+// HD / Enhance Image
+// Compatible con TU AlyaBot-MD
 
-export default {
-  command: ['hd', 'upscale'],
-  category: 'utils',
-    run: async (sock, m, args, command, text, prefix) => {
-    try {
-      const q = m.quoted || m
-      const mime = q.mimetype || q.msg?.mimetype || ''
+import fetch from 'node-fetch'
+import FormData from 'form-data'
 
-      if (!mime) return m.reply(`✐ Envía una *imagen* junto al *comando* ${prefix + command}`)
-      if (!/image\/(jpe?g|png)/.test(mime)) {
-        return m.reply(`✎ El formato *${mime}* no es compatible`)
+// ===============================
+// API
+// ===============================
+
+async function mejorarImagen(buffer) {
+
+  const form =
+    new FormData()
+
+  form.append(
+    'image',
+    buffer,
+    'image.jpg'
+  )
+
+  const res =
+    await fetch(
+      'https://api.itsrose.rest/image/upscale',
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            'Bearer YOUR_APIKEY'
+        },
+
+        body: form
       }
+    )
 
-     // await m.reply(mess.wait)
+  if (!res.ok) {
 
-      const buffer = await q.download()
-      const uploadedUrl = await uploadToUguu(buffer)
-      if (!uploadedUrl) {
-        return m.reply('✐ No se pudo *subir* la imagen')
-      }
+    throw new Error(
+      `HTTP ${res.status}`
+    )
+  }
 
-      const enhancedBuffer = await getEnhancedBuffer(uploadedUrl)
-      if (!enhancedBuffer) {
-        return m.reply('✎ No se pudo *obtener* la imagen mejorada')
-      }
+  const json =
+    await res.json()
 
-      await sock.sendMessage(m.chat, { image: enhancedBuffer, caption: null }, { quoted: m })
-    } catch (err) {
-      console.error(err)
-      await m.reply(msgglobal)
-    }
-  },
-};
+  if (!json.status) {
 
-async function uploadToUguu(buffer) {
-  const body = new FormData()
-  body.append('files[]', buffer, 'image.jpg')
+    throw new Error(
+      'Error al mejorar'
+    )
+  }
 
-  const res = await fetch('https://uguu.se/upload.php', {
-    method: 'POST',
-    body,
-    headers: body.getHeaders(),
-  })
-
-  const json = await res.json()
-  return json.files?.[0]?.url
+  return json.result.image
 }
 
-async function getEnhancedBuffer(url) {
-  const res = await fetch(`${api.url}/tools/upscale?url=${url}&key=${api.key}`)
-  if (!res.ok) return null
+// ===============================
+// EXPORT
+// ===============================
 
-  return Buffer.from(await res.arrayBuffer())
+export default {
+
+  command: [
+    'hd',
+    'enhance',
+    'upscale'
+  ],
+
+  category:
+    'tools',
+
+  run: async (
+    sock,
+    m,
+    args,
+    command
+  ) => {
+
+    try {
+
+      const quoted =
+        m.quoted
+          ? m.quoted
+          : m
+
+      const mime =
+        quoted.mimetype || ''
+
+      if (
+        !mime.startsWith(
+          'image/'
+        )
+      ) {
+
+        return m.reply(
+
+`✿ Responde a una imagen.
+
+Ejemplo:
+.hd`
+        )
+      }
+
+      // =====================
+      // REACT
+      // =====================
+
+      await sock.sendMessage(
+        m.chat,
+        {
+          react: {
+            text: '✨',
+            key: m.key
+          }
+        }
+      )
+
+      // =====================
+      // DOWNLOAD
+      // =====================
+
+      const buffer =
+        await quoted.download()
+
+      // =====================
+      // UPSCALE
+      // =====================
+
+      const hd =
+        await mejorarImagen(
+          buffer
+        )
+
+      // =====================
+      // SEND
+      // =====================
+
+      await sock.sendMessage(
+        m.chat,
+        {
+          image: {
+            url: hd
+          },
+
+          caption:
+            '✨ Imagen mejorada en HD'
+        },
+        {
+          quoted: m
+        }
+      )
+
+    } catch (e) {
+
+      console.log(e)
+
+      m.reply(
+        '❌ No se pudo mejorar la imagen'
+      )
+    }
+  },
 }

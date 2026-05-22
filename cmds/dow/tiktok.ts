@@ -1,158 +1,120 @@
-import fetch from 'node-fetch';
+import fetch from 'node-fetch'
+
+const API = "https://www.tikwm.com"
+const UA = "Mozilla/5.0"
+
+async function api(endpoint, params) {
+  const res = await fetch(`${API}${endpoint}`, {
+    method: "POST",
+    headers: {
+      "User-Agent": UA,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "application/json"
+    },
+    body: new URLSearchParams(params).toString(),
+  })
+
+  const data = await res.json()
+
+  if (data.code !== 0) {
+    throw new Error(data.msg)
+  }
+
+  return data.data
+}
+
+function isTikTokLink(text) {
+  return /tiktok\.com/i.test(text) || /vm\.tiktok/i.test(text)
+}
 
 export default {
   command: ['tiktok', 'tt'],
   category: 'downloader',
-  run: async (sock, m, args, command) => {
+
+  run: async (sock, m, args) => {
 
     if (!args.length) {
       return m.reply(`✿ Ingresa un término o enlace de TikTok.`)
     }
 
-    const urls = args.filter(arg => arg.includes("tiktok.com"))
+    const text = args.join(" ")
 
-    if (urls.length) {
-      if (urls.length > 1) {
-        const medias = []
-        for (const url of urls.slice(0, 10)) {
-          try {
-            const apiUrl = `${api.url}/dl/tiktok?url=${url}&key=${api.key}`
-            const res = await fetch(apiUrl)
-            if (!res.ok) throw new Error(`El servidor respondió con ${res.status}`)
-            const json = await res.json()
-            const data = json.data
-            if (!data) continue
+    try {
 
-            const {
-              title = 'Sin título',
-              dl,
-              duration,
-              author = {},
-              stats = {},
-              music = {},
-              type
-            } = data
+      // DESCARGA POR LINK
+      if (isTikTokLink(text)) {
 
-            const caption =
-              `ㅤ۟∩　ׅ　★ ໌　ׅ　🅣𝗂𝗄𝖳𝗈𝗄 🅓ownload　ׄᰙ\n\n` +
-              `𖣣ֶㅤ֯⌗ ✿ ⬭ Título: ${title}\n` +
-              `𖣣ֶㅤ֯⌗ ★ ⬭ Autor: ${author.nickname || author.unique_id || 'Desconocido'}\n` +
-              `𖣣ֶㅤ֯⌗ ❃ ⬭ Duración: ${duration || 'N/A'}\n` +
-              `𖣣ֶㅤ֯⌗ ♡ ⬭ Likes: ${(stats.likes || 0).toLocaleString()}\n` +
-              `𖣣ֶㅤ֯⌗ ❖ ⬭ Comentarios: ${(stats.comments || 0).toLocaleString()}\n` +
-              `𖣣ֶㅤ֯⌗ ☄︎ ⬭ Vistas: ${(stats.views || stats.plays || 0).toLocaleString()}\n` +
-              `𖣣ֶㅤ֯⌗ ⚡︎ ⬭ Compartidos: ${(stats.shares || 0).toLocaleString()}\n` +
-              `𖣣ֶㅤ֯⌗ ꕥ ⬭ Audio: ${music.title ? music.title + ' -' : 'Desconocido'} ${music.author || ''}`
+        const raw = await api("/api/", {
+          url: text
+        })
 
-            medias.push({
-              type: type,
-              data: { url: dl },
-              caption
-            })
-          } catch (e) {
-            continue
-          }
-        }
-if (medias.length === 1) {
-  await sock.sendMessage(
-    m.chat,
-    { [type]: dl, caption },
-    { quoted: m }
-  )
-} else if (medias.length >= 2) {
-  await sock.sendAlbumMessage(m.chat, medias, { quoted: m })
-} else {
-  await m.reply('✿ No se pudieron procesar los resultados.')
+        const caption =
+          `ㅤ۟∩　ׅ　★ ໌　ׅ　🅣𝗂𝗄𝖳𝗈𝗄 🅓ownload　ׄᰙ\n\n` +
+          `𖣣ֶㅤ֯⌗ ✿ ⬭ Título: ${raw.title || 'Sin título'}\n` +
+          `𖣣ֶㅤ֯⌗ ★ ⬭ Autor: ${raw.author?.nickname || raw.author?.unique_id || 'Desconocido'}\n` +
+          `𖣣ֶㅤ֯⌗ ❃ ⬭ Duración: ${raw.duration || 'N/A'}\n` +
+          `𖣣ֶㅤ֯⌗ ♡ ⬭ Likes: ${(raw.digg_count || 0).toLocaleString()}\n` +
+          `𖣣ֶㅤ֯⌗ ❖ ⬭ Comentarios: ${(raw.comment_count || 0).toLocaleString()}\n` +
+          `𖣣ֶㅤ֯⌗ ☄︎ ⬭ Vistas: ${(raw.play_count || 0).toLocaleString()}\n` +
+          `𖣣ֶㅤ֯⌗ ⚡︎ ⬭ Compartidos: ${(raw.share_count || 0).toLocaleString()}\n` +
+          `𖣣ֶㅤ֯⌗ ꕥ ⬭ Audio: ${raw.music_info?.title || 'Desconocido'} ${raw.music_info?.author || ''}`
+
+        await sock.sendMessage(
+          m.chat,
+          {
+            video: { url: raw.play },
+            caption
+          },
+          { quoted: m }
+        )
+
       } else {
-        const url = urls[0]
-        try {
-          const apiUrl = `${api.url}/dl/tiktok?url=${url}&key=${api.key}`
-          const res = await fetch(apiUrl)
-          if (!res.ok) throw new Error(`El servidor respondió con ${res.status}`)
-          const json = await res.json()
-          const data = json.data
-          if (!data) return m.reply(`✿ No se encontraron resultados para: ${url}`)
 
-          const {
-            title = 'Sin título',
-            dl,
-            duration,
-            author = {},
-            stats = {},
-            music = {},
-            type
-          } = data
+        // BÚSQUEDA
+        const raw = await api("/api/feed/search", {
+          keywords: text,
+          count: "5",
+          cursor: "0"
+        })
 
-          const caption =
-            `ㅤ۟∩　ׅ　★ ໌　ׅ　🅣𝗂𝗄𝖳𝗈𝗄 🅓ownload　ׄᰙ\n\n` +
-            `𖣣ֶㅤ֯⌗ ✿ ⬭ Título: ${title}\n` +
-            `𖣣ֶㅤ֯⌗ ★ ⬭ Autor: ${author.nickname || author.unique_id || 'Desconocido'}\n` +
-            `𖣣ֶㅤ֯⌗ ❖ ⬭ Duración: ${duration || 'N/A'}\n` +
-            `𖣣ֶㅤ֯⌗ ♡ ⬭ Likes: ${(stats.likes || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ꕥ ⬭ Comentarios: ${(stats.comments || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ❒ ⬭ Vistas: ${(stats.views || stats.plays || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ☄︎ ⬭ Compartidos: ${(stats.shares || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ⚡︎ ⬭ Audio: ${music.title ? music.title + ' -' : 'Desconocido'} ${music.author || ''}`
+        const videos = raw.videos || []
 
-await sock.sendMessage(
-  m.chat,
-  { [type]: { url: dl }, caption },
-  { quoted: m }
-)
-        } catch (e) {
-          await m.reply(msgglobal)
-        }
-      }
-    } else {
-      const query = args.join(" ")
-      try {
-        const apiUrl = `${api.url}/search/tiktok?query=${encodeURIComponent(query)}&key=${api.key}`
-        const res = await fetch(apiUrl)
-        if (!res.ok) throw new Error(`El servidor respondió con ${res.status}`)
-        const json = await res.json()
-        const results = json.data
-
-        if (!results || results.length === 0) {
-          return m.reply(`❖ No se encontraron resultados para: ${query}`)
+        if (!videos.length) {
+          return m.reply(`❖ No se encontraron resultados para: ${text}`)
         }
 
         const medias = []
-        for (const data of results.slice(0, 5)) {
-          const {
-            title = 'Sin título',
-            dl,
-            duration,
-            author = {},
-            stats = {},
-            music = {},
-          } = data
+
+        for (const v of videos) {
 
           const caption =
             `ㅤ۟∩　ׅ　★ ໌　ׅ　🅣𝗂𝗄𝖳𝗈𝗄 🅓ownload　ׄᰙ\n\n` +
-            `𖣣ֶㅤ֯⌗ ✿ ⬭ Título: ${title}\n` +
-            `𖣣ֶㅤ֯⌗ ❑ ⬭ Autor: ${author.nickname || author.unique_id || 'Desconocido'}\n` +
-            `𖣣ֶㅤ֯⌗ ❀ ⬭ Duración: ${duration || 'N/A'}\n` +
-            `𖣣ֶㅤ֯⌗ ♡ ⬭ Likes: ${(stats.likes || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ★ ⬭ Comentarios: ${(stats.comments || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ❖ ⬭ Vistas: ${(stats.views || stats.plays || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ꕥ ⬭ Compartidos: ${(stats.shares || 0).toLocaleString()}\n` +
-            `𖣣ֶㅤ֯⌗ ☄︎ ⬭ Audio: ${music.title ? music.title + ' -' : 'Desconocido'} ${music.author || ''}`
+            `𖣣ֶㅤ֯⌗ ✿ ⬭ Título: ${v.title || 'Sin título'}\n` +
+            `𖣣ֶㅤ֯⌗ ❑ ⬭ Autor: ${v.author?.nickname || v.author?.unique_id || 'Desconocido'}\n` +
+            `𖣣ֶㅤ֯⌗ ❀ ⬭ Duración: ${v.duration || 'N/A'}\n` +
+            `𖣣ֶㅤ֯⌗ ♡ ⬭ Likes: ${(v.digg_count || 0).toLocaleString()}\n` +
+            `𖣣ֶㅤ֯⌗ ★ ⬭ Comentarios: ${(v.comment_count || 0).toLocaleString()}\n` +
+            `𖣣ֶㅤ֯⌗ ❖ ⬭ Vistas: ${(v.play_count || 0).toLocaleString()}\n` +
+            `𖣣ֶㅤ֯⌗ ꕥ ⬭ Compartidos: ${(v.share_count || 0).toLocaleString()}\n` +
+            `𖣣ֶㅤ֯⌗ ☄︎ ⬭ Audio: ${v.music_info?.title || 'Desconocido'} ${v.music_info?.author || ''}`
 
           medias.push({
             type: 'video',
-            data: { url: dl },
+            data: { url: v.play },
             caption
           })
         }
 
-        if (medias.length) {
-          await sock.sendAlbumMessage(m.chat, medias, { quoted: m })
-        } else {
-          await m.reply('✿ No se pudieron procesar los resultados.')
-        }
-      } catch (e) {
-        m.reply(msgglobal)
+        await sock.sendAlbumMessage(
+          m.chat,
+          medias,
+          { quoted: m }
+        )
       }
+
+    } catch (e) {
+      console.log(e)
+      await m.reply(String(e))
     }
   },
-};
+}

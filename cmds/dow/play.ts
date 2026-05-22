@@ -1,7 +1,8 @@
 import ytsearch from 'yt-search'
 import { getBuffer } from '../../core/message.ts'
 import fetch from 'node-fetch'
-
+import { execSync } from 'child_process'
+import fs from 'fs'
 export default {
   command: ['play', 'mp3', 'ytmp3', 'ytaudio', 'playaudio'],
   category: 'downloader',
@@ -36,20 +37,22 @@ export default {
 
       await sock.sendMessage(m.chat, { image: thumbBuffer, caption }, { quoted: m })
 
-      const dlEndpoint = `${global.api.url}/dl/ytmp3v2?url=${encodeURIComponent(url)}&key=${global.api.key}`
-      const resDl = await fetch(dlEndpoint).then(r => r.json())
-      if (!resDl?.status || !resDl.data?.dl) {
-        return m.reply('《✧》 No se pudo descargar el *audio*, intenta más tarde.')
-      }
+const file = `./tmp/${Date.now()}.mp3`
 
-      const audioBuffer = await getBuffer(resDl.data.dl)
+execSync(`yt-dlp -x --audio-format mp3 -o "${file}" "${url}"`)
+
+const audioBuffer = fs.readFileSync(file)
+
       const mensaje = {
         audio: audioBuffer,
         mimetype: 'audio/mpeg',
-        fileName: `${resDl.data.title}.mp3` || `${title}.mp3`
+        fileName: `${title}.mp3`
       }
 
       await sock.sendMessage(m.chat, mensaje, { quoted: m })
+
+    fs.unlinkSync(file)
+
     } catch (e) {
       await m.reply(msgglobal)
     }

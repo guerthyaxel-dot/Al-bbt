@@ -1,45 +1,98 @@
-import fetch from 'node-fetch';
+import fetch from 'node-fetch'
 
 export default {
-  command: ['mf', 'mediafire'],
+  command: ['mediafire', 'mf'],
   category: 'downloader',
+
   run: async (sock, m, args) => {
+
+    if (!args.length) {
+      return m.reply(
+        '✿ Usa:\n+mf https://www.mediafire.com/file/...'
+      )
+    }
+
+    const url = args[0]
+
+    if (!url.includes('mediafire.com')) {
+      return m.reply('✿ Link inválido.')
+    }
+
     try {
-      let text = args.join(' ')
-      if (!text) return m.reply('✐ Ingresa una URL de Mediafire.');
-      if (!/^https?:\/\/(www\.)?mediafire\.com/.test(text)) {
-        return m.reply('✦ Solo se aceptan enlaces de Mediafire.');
+
+      const start = Date.now()
+
+      await m.reply(
+        '╭─❍ MediaFire Engine\n' +
+        '│ ✦ Obteniendo archivo...\n' +
+        '╰──────────────'
+      )
+
+      // Obtener html
+      const res = await fetch(url)
+
+      const html = await res.text()
+
+      // Sacar link directo
+      const dlMatch = html.match(
+        /https:\/\/download\d+\.mediafire\.com\/[^"]+/i
+      )
+
+      if (!dlMatch) {
+        return m.reply(
+          '✿ No pude obtener el archivo.'
+        )
       }
 
-      const apiUrl = `${api.url}/dl/mediafire?url=${encodeURIComponent(text)}&key=${api.key}`;
-      const res = await fetch(apiUrl);
-      const json = await res.json();
+      const dl = dlMatch[0]
 
-      if (!json.status) return m.reply('✦ No se pudo obtener el archivo.');
+      // Nombre
+      const nameMatch = html.match(
+        /<div class="filename">(.+?)<\/div>/i
+      )
 
-      const { filename, filetype, filesize, uploaded, download } = json.result;
+      const fileName = nameMatch
+        ? nameMatch[1]
+        : 'file'
 
-      let info = `˚ʚ♡ɞ₊ *MEDIAFIRE - DL* ෆ╹ .̮ ╹ෆ\n\n`;
-      info += `➩ Descargando › *${filename}*\n`;
-      info += `> ❖ Tipo › *${filetype}*\n`;
-      info += `> ❖ Tamaño › *${filesize}*\n`;
-      info += `> ❖ Subido › *${uploaded}*\n\n`;
-      info += `⇢ Descargando y enviando archivo...`;
+      // Tamaño
+      const sizeMatch = html.match(
+        /<span class="details-normal">(.+?)<\/span>/i
+      )
 
-    await sock.sendContextInfoIndex(m.chat, info, {}, m, true)
+      const size = sizeMatch
+        ? sizeMatch[1]
+        : 'Desconocido'
 
+      const speed =
+        ((Date.now() - start) / 1000).toFixed(1)
+
+      const caption =
+        `╭─❍ MediaFire Engine\n` +
+        `│ ✦ File: ${fileName}\n` +
+        `│ ✦ Size: ${size}\n` +
+        `│ ✦ Speed: ${speed}s\n` +
+        `╰──────────────`
+
+      // Enviar archivo
       await sock.sendMessage(
         m.chat,
         {
-          document: { url: download },
+          document: { url: dl },
+          fileName,
           mimetype: 'application/octet-stream',
-          fileName: filename,
+          caption
         },
         { quoted: m }
-      );
+      )
+
     } catch (e) {
-      console.error(e);
-      m.reply(msgglobal);
+
+      console.log(e)
+
+      return m.reply(
+        '✿ Error al descargar el archivo.'
+      )
     }
-  },
-};
+  }
+}

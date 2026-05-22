@@ -65,7 +65,8 @@ export default {
 : ̗̀❖ *ᴛɪᴍᴇ ::* ${tiempo}, ${tiempo2}
 : ̗̀❖ *ᴜsᴇʀs ::* ${users.toLocaleString()}
 : ̗̀❖ *ᴍɪ ᴛɪᴇᴍᴘᴏ ::* ${time}
-: ̗̀❖ *ᴜʀʟ ::* ${link}
+: ̗̀❖ *ᴜʀʟ ::* 
+https://whatsapp.com/channel/0029Vb87L74EgGfJIFOmDn38
 
    ⌒࣪᷼⏜͡  ۪  ࿚ꨪᰰ࿙  ࣭࣪⢏࣭۟⢢࣭ׄ᎐፝֟᎐࣭ׄ⡔࣭۟⡹࣭ׄ  ࿚ꨪᰰ࿙  ۪  ͡⏜ׄ᷼⌒
 
@@ -107,7 +108,7 @@ export default {
           menu += `╰╼ׅࣶ፝֟╾╌ֵ╾͜─ํ͜┈ְ ࣭࣪⢏࣭ࣧ⢢࣭ׄ᎐፝֟͟͝᎐࣭ׄ⡔࣭ࣧ⡹࣭ׄ ְ┈ํ͜─͜╼ꨪᰰ╾࣮╌╼ࣶׅ፝֟╾╯ \n`
       }
 
-      menu += `\n> *${botname2} desarrollado por Diego* ૮(˶ᵔᵕᵔ˶)ა`;
+      menu += `\n> *${botname2} desarrollado por ʀᴀʏɴ* ♥︎`;
 
 /*let ppUser, yio;
 try {
@@ -165,7 +166,7 @@ await sock.reply(
               externalAdReply: {
                 renderLargerThumbnail: true,
                 title: botname,
-                body: `${botname2}, Built With 💛 By Stellar`,
+                body: `${botname2}, Built With ♥︎ ʀᴀʏɴ`,
                 mediaType: 1,
                 thumbnailUrl: banner,
               },

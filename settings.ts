@@ -2,16 +2,16 @@ import fs from 'fs';
 import { watchFile, unwatchFile } from 'fs'
 import { fileURLToPath } from 'url'
 
-global.owner = ['5492916450307', '573196588149', '5218711426787']
+global.owner = ['59169401409','59169987298']
 global.sessionName = 'Sessions/Owner'
 
 global.api = {
-  url: 'https://api.stellarwa.xyz',
+  channel: 'https://whatsapp.com/channel/0029Vb87L74EgGfJIFOmDn38',
   key: '' 
 }
 
 global.msgglobal = '⋆˚𝜗 There was a problem processing the request, contact the creator or a moderator to fix this issue. (✿◡‿◡)'
-global.dev = `© ᴍᴀᴅᴇ ᴡɪᴛʜ ʙʏ ɪ'ᴍ ᴅɪᴇɢᴏ ッ`
+global.dev = `© ɪᴍ ᴅxʀᴋᴏ ᴏʀ ʀᴀʏɴ✦`
 
 global.mess = {
   socket: '(∩´͈ ᴖ `͈∩ ྀི) Este comando solo puede ser ejecutado por un Socket.',

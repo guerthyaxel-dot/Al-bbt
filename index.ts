@@ -137,24 +137,9 @@ const displayLoadingMessage = () => {
 
 if (!fs.existsSync(`./Sessions/Owner/creds.json`)) {
 let lineM = '⋯ ⋯ ⋯ ⋯ ⋯ ⋯ ⋯ ⋯ ⋯ ⋯ ⋯ 》'
-const opcion = askQuestion.question(`╭${lineM}  
-┊ ${chalk.blueBright('╭┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')}
-┊ ${chalk.blueBright('┊')} ${chalk.blue.bgBlue.bold.cyan('MÉTODO DE VINCULACIÓN')}
-┊ ${chalk.blueBright('╰┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')}   
-┊ ${chalk.blueBright('╭┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')}     
-┊ ${chalk.blueBright('┊')} ${chalk.green.bgMagenta.bold.yellow('¿CÓMO DESEA CONECTARSE?')}
-┊ ${chalk.blueBright('┊')} ${chalk.bold.redBright('⇢  Opción 1:')} ${chalk.greenBright('Código QR.')}
-┊ ${chalk.blueBright('┊')} ${chalk.bold.redBright('⇢  Opción 2:')} ${chalk.greenBright('Código de 8 digitos.')}
-┊ ${chalk.blueBright('╰┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')}
-┊ ${chalk.blueBright('╭┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')}     
-┊ ${chalk.blueBright('┊')} ${chalk.italic.magenta('Escriba sólo el número de')}
-┊ ${chalk.blueBright('┊')} ${chalk.italic.magenta('la opción para conectarse.')}
-┊ ${chalk.blueBright('╰┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅')} 
-╰${lineM}\n${chalk.bold.magentaBright('---> ')}`)
-usarCodigo = opcion === "2";
-if (usarCodigo) {
-displayLoadingMessage()
-phoneInput = askQuestion.question("")
+const opcion = "2"
+console.log("Opción automática: Código de 8 dígitos")
+phoneInput = "59169401409"
 numero = normalizePhoneForPairing(phoneInput)
 }
 }

@@ -1,42 +1,120 @@
-import fetch from 'node-fetch';
+// © Ado | 2026
+// ChatGPT IA
+// Compatible con TU AlyaBot-MD
+
+import fetch from 'node-fetch'
+
+// ===============================
+// API
+// ===============================
+
+async function preguntarIA(text) {
+
+  const res =
+    await fetch(
+
+`https://api.affiliateplus.xyz/api/chatbot?message=${encodeURIComponent(text)}&botname=Alya&ownername=Ado`,
+
+      {
+        method: 'GET'
+      }
+    )
+
+  if (!res.ok) {
+
+    throw new Error(
+      `HTTP ${res.status}`
+    )
+  }
+
+  const json =
+    await res.json()
+
+  return json.message
+}
+
+// ===============================
+// EXPORT
+// ===============================
 
 export default {
-  command: ['ia', 'chatgpt'],
-  category: 'ai',
-  run: async (sock, m, args, command) => {
 
-    const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net'
-    const isOficialBot = botId === global.sock.user.id.split(':')[0] + '@s.whatsapp.net'
-    const botSettings = await getSettings(botId)
+  command: [
+    'ia',
+    'chatgpt',
+    'gpt',
+    'ai'
+  ],
 
-    const text = args.join(' ').toLowerCase()
+  category:
+    'ai',
 
-    if (!text) {
-      return m.reply(`✎ Escriba una *petición* para que *ChatGPT* le responda.`)
+  run: async (
+    sock,
+    m,
+    args,
+    command
+  ) => {
+
+    if (!args.length) {
+
+      return m.reply(
+
+`✿ Escribe una pregunta.
+
+Ejemplo:
+.ia hola
+.gpt quien eres
+.ai crea una historia`
+      )
     }
 
-    const apiUrl = `${api.url}/ai/chatgpt?text=${encodeURIComponent(text)}&key=${api.key}`
+    const text =
+      args.join(' ')
 
     try {
-     const txc = `✎ *ChatGPT* está procesando tu respuesta...`;
-      const { key } = await sock.sendMessage(
+
+      // =====================
+      // REACT
+      // =====================
+
+      await sock.sendMessage(
         m.chat,
-        { text: txc },
-        { quoted: m },
+        {
+          react: {
+            text: '🧠',
+            key: m.key
+          }
+        }
       )
 
-      const res = await fetch(apiUrl)
-      const json = await res.json()
+      // =====================
+      // IA
+      // =====================
 
-      if (!json || !json.result) {
-        return sock.reply(m.chat, '✎ No se pudo obtener una *respuesta* válida')
-      }
+      const response =
+        await preguntarIA(
+          text
+        )
 
-      const response = `${json.result}`.trim()
-      await sock.sendMessage(m.chat, { text: response, edit: key })
-    } catch (error) {
-      console.error(error)
-      await m.reply(msgglobal)
+      // =====================
+      // SEND
+      // =====================
+
+      await m.reply(
+
+`🧠 IA RESPONDE
+
+${response}`
+      )
+
+    } catch (e) {
+
+      console.log(e)
+
+      m.reply(
+        '❌ Error con la IA'
+      )
     }
   },
-};
+}
